@@ -13,6 +13,7 @@
 		loader = $('#loader'),
 		createButton = $('#create'),
 
+		exportForm = $('#export-form'),
 		codepenForm = $('#codepen-form'),
 		jsfiddleForm = $('#jsfiddle-form'),
 		jsbinForm = $('#jsbin-form'),
@@ -33,6 +34,23 @@
 	restoreSettings();
 
 	//SUBMITTING THE CODE TO CodePen/jsFiddle/jsBin
+
+	exportForm.on('submit', function (e) {
+		e.preventDefault();
+		const html = htmlTextarea.val();
+		const css = cssTextarea.val();
+		const prefix = idPrefix.val();
+		const exportString = `${html}\n<style>${css}\n</style>`;
+	    const blob = new Blob([exportString],{
+				type: "text/html;charset=utf-8"
+	    });
+	    saveAs(blob, `${prefix}.html`);
+	    // html2canvas(node).then(function(canvas) {
+			// 	canvas.toBlob(function(blob) {
+			// 		saveAs(blob, `${prefix}.png`);
+			// 	});
+	    // });
+	});
 
 	codepenForm.on('submit', function () {
 		var dataInput = codepenForm.find('input[name=data]');
