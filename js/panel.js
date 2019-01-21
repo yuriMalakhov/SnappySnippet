@@ -44,12 +44,16 @@
 	    const blob = new Blob([exportString],{
 				type: "text/html;charset=utf-8"
 	    });
-	    saveAs(blob, `${prefix}.html`);
-	    // html2canvas(node).then(function(canvas) {
-			// 	canvas.toBlob(function(blob) {
-			// 		saveAs(blob, `${prefix}.png`);
-			// 	});
-	    // });
+			saveAs(blob, `${prefix}.html`);
+			inspectedContext.eval(
+				`(${NodeScreenCapturer.toString()})($0, "${prefix}")`,
+				function(result, exception) {
+					if (exception) {
+						errorBox.find(".error-message").text(exception.value);
+						errorBox.addClass("active");
+					}
+				}
+			);
 	});
 
 	codepenForm.on('submit', function () {
