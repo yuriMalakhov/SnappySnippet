@@ -35,25 +35,54 @@
 
 	//SUBMITTING THE CODE TO CodePen/jsFiddle/jsBin
 
+	const clipboard = {
+    copy(value) {
+			const input = document.createElement('input');
+			input.style.cssText = 'position: absolute; left: -10000px;'
+			input.value = value;
+			document.body.appendChild(input);
+
+			input.select();
+			document.execCommand('copy');
+
+			input.remove();
+    }
+	};
+
+	const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+
 	exportForm.on('submit', function (e) {
 		e.preventDefault();
 		const html = htmlTextarea.val();
 		const css = cssTextarea.val();
 		const prefix = idPrefix.val();
-		const exportString = `${html}\n<style>${css}\n</style>`;
-	    const blob = new Blob([exportString],{
-				type: "text/html;charset=utf-8"
-	    });
-			saveAs(blob, `${prefix}.html`);
-			inspectedContext.eval(
-				`(${NodeScreenCapturer.toString()})($0, "${prefix}")`,
-				function(result, exception) {
-					if (exception) {
-						errorBox.find(".error-message").text(exception.value);
-						errorBox.addClass("active");
-					}
+		const className = prefix.replace(/\W*/, '').toLowerCase();
+		
+		const exportString = `
+			class KL${capitalize(className)} extends HTMLElement {
+				connectedCallback() {
+					this.attachShadow({ mode: "open" }).innerHTML = \`${html}\n<style>${css}\n</style>\`;
 				}
-			);
+			}
+			customElements.define("kl-${className}", KL${capitalize(className)});
+		`;
+		
+		const blob = new Blob([exportString],{
+			type: "text/javascript;charset=utf-8"
+		});
+		
+		saveAs(blob, `${prefix}.js`);
+		clipboard.copy(exportString);
+		
+		inspectedContext.eval(
+			`(${NodeScreenCapturer.toString()})($0, "${prefix}")`,
+			function(result, exception) {
+				if (exception) {
+					errorBox.find(".error-message").text(exception.value);
+					errorBox.addClass("active");
+				}
+			}
+		);
 	});
 
 	codepenForm.on('submit', function () {
