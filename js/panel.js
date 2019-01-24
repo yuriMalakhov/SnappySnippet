@@ -57,8 +57,8 @@
 		const css = cssTextarea.val();
 		const prefix = idPrefix.val();
 		const className = prefix.replace(/\W*/, '').toLowerCase();
-		
-		const exportString = `
+		const exportHtml = `${html}\n<style>${css}\n</style>`;
+		const exportWebComponent = `
 			class KL${capitalize(className)} extends HTMLElement {
 				connectedCallback() {
 					this.attachShadow({ mode: "open" }).innerHTML = \`${html}\n<style>${css}\n</style>\`;
@@ -67,22 +67,35 @@
 			customElements.define("kl-${className}", KL${capitalize(className)});
 		`;
 		
-		const blob = new Blob([exportString],{
-			type: "text/javascript;charset=utf-8"
+		// const blob = new Blob([exportWebComponent],{
+		// 	type: "text/javascript;charset=utf-8"
+		// });
+		
+		// saveAs(blob, `${prefix}.js`);
+		clipboard.copy(exportWebComponent);
+		
+		lastSnapshot.exportWebComponent = exportWebComponent;
+		lastSnapshot.exportHtml = exportHtml;
+
+		chrome.tabs.query({active: false, currentWindow: true}, function(tabs) {
+			console.log('tabs', tabs);
+			tabs.filter((tab) => tab.url.indexOf('ory') > -1).forEach((tab) => {
+				chrome.tabs.executeScript(
+					tab.id,
+					{code: `window.dispatchEvent(new CustomEvent('new-block', {detail: ${JSON.stringify(lastSnapshot)} }))`}
+				);
+			});	
 		});
-		
-		saveAs(blob, `${prefix}.js`);
-		clipboard.copy(exportString);
-		
-		inspectedContext.eval(
-			`(${NodeScreenCapturer.toString()})($0, "${prefix}")`,
-			function(result, exception) {
-				if (exception) {
-					errorBox.find(".error-message").text(exception.value);
-					errorBox.addClass("active");
-				}
-			}
-		);
+
+		// inspectedContext.eval(
+		// 	`(${NodeScreenCapturer.toString()})($0, "${prefix}")`,
+		// 	function(result, exception) {
+		// 		if (exception) {
+		// 			errorBox.find(".error-message").text(exception.value);
+		// 			errorBox.addClass("active");
+		// 		}
+		// 	}
+		// );
 	});
 
 	codepenForm.on('submit', function () {

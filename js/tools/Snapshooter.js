@@ -98,7 +98,7 @@ function Snapshooter(root) {
 				if (value.match(/^(url\()|(attr\()|normal|none|open-quote|close-quote|no-open-quote|no-close-quote|chapter_counter|'/g)) {
 					output.push(value);
 				} else {
-					output.push("'" + value + "'");
+					output.push(value || "");
 				}
 			}
 		}

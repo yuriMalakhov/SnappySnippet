@@ -15,5 +15,10 @@
     ],
     "persistent": false
   },
+  "permissions": [
+    "tabs",
+    "http://*/*",
+    "https://*/*"
+  ],
   "content_security_policy": "script-src 'self' https://cdnjs.cloudflare.com https://apis.google.com https://platform.twitter.com https://www.facebook.com; object-src 'self'"
 }
