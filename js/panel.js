@@ -13,6 +13,7 @@
 		loader = $('#loader'),
 		createButton = $('#create'),
 
+		exportForm = $('#export-form'),
 		codepenForm = $('#codepen-form'),
 		jsfiddleForm = $('#jsfiddle-form'),
 		jsbinForm = $('#jsbin-form'),
@@ -33,6 +34,69 @@
 	restoreSettings();
 
 	//SUBMITTING THE CODE TO CodePen/jsFiddle/jsBin
+
+	const clipboard = {
+    copy(value) {
+			const input = document.createElement('input');
+			input.style.cssText = 'position: absolute; left: -10000px;'
+			input.value = value;
+			document.body.appendChild(input);
+
+			input.select();
+			document.execCommand('copy');
+
+			input.remove();
+    }
+	};
+
+	const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+	exportForm.on('submit', function (e) {
+		e.preventDefault();
+		const html = htmlTextarea.val();
+		const css = cssTextarea.val();
+		const prefix = idPrefix.val();
+		const className = prefix.replace(/\W*/, '').toLowerCase();
+		const exportHtml = `${html}\n<style>${css}\n</style>`;
+		const exportWebComponent = `
+			class KL${capitalize(className)} extends HTMLElement {
+				connectedCallback() {
+					this.attachShadow({ mode: "open" }).innerHTML = \`${html}\n<style>${css}\n</style>\`;
+				}
+			}
+			customElements.define("kl-${className}", KL${capitalize(className)});
+		`;
+		
+		// const blob = new Blob([exportWebComponent],{
+		// 	type: "text/javascript;charset=utf-8"
+		// });
+		
+		// saveAs(blob, `${prefix}.js`);
+		clipboard.copy(exportWebComponent);
+		
+		lastSnapshot.exportWebComponent = exportWebComponent;
+		lastSnapshot.exportHtml = exportHtml;
+
+		chrome.tabs.query({active: false, currentWindow: true}, function(tabs) {
+			console.log('tabs', tabs);
+			tabs.filter((tab) => tab.url.indexOf('ory') > -1).forEach((tab) => {
+				chrome.tabs.executeScript(
+					tab.id,
+					{code: `window.dispatchEvent(new CustomEvent('new-block', {detail: ${JSON.stringify(lastSnapshot)} }))`}
+				);
+			});	
+		});
+
+		// inspectedContext.eval(
+		// 	`(${NodeScreenCapturer.toString()})($0, "${prefix}")`,
+		// 	function(result, exception) {
+		// 		if (exception) {
+		// 			errorBox.find(".error-message").text(exception.value);
+		// 			errorBox.addClass("active");
+		// 		}
+		// 	}
+		// );
+	});
 
 	codepenForm.on('submit', function () {
 		var dataInput = codepenForm.find('input[name=data]');
